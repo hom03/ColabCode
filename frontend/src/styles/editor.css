@@ -1,0 +1,100 @@
+.ide-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ide-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.ide-left {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ccc;
+}
+
+.ide-filetree {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.ide-active-users {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 1px solid #ccc;
+}
+
+.ide-center {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  min-height: 0; 
+  border-right: 1px solid #ccc;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.ide-center h1 {
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--text-h);
+  width: 100%;
+}
+
+.language-selector {
+  margin-bottom: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.CodeEditor {
+  flex: 3 1 50%;
+  width: 100%;
+  min-height: 0;
+}
+
+.run-button {
+  margin-top: 10px;
+  width: 100%;
+  color: black !important;
+}
+
+.output-panel {
+  flex: 2 1 50%;
+  width: 100%;
+  background: #111;
+  color: #0f0;
+  padding: 10px;
+  overflow-y: auto;
+  margin-top: 10px;
+  border-radius: 4px;
+  min-height: 0;
+}
+
+.ide-right {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #ccc;
+  background: var(--bg);
+}
+
+.remote-cursor {
+  border-left: 2px solid #00ffcc;
+}
+
+.remote-cursor-label {
+  background: #00ffcc;
+  color: black;
+  padding: 2px 5px;
+  font-size: 11px;
+  margin-left: 4px;
+  border-radius: 4px;
+  font-weight: 600;
+}

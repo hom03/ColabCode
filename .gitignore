@@ -1,0 +1,22 @@
+# Node
+node_modules/
+frontend/node_modules/
+
+# Build
+dist/
+frontend/dist/
+
+# Env
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# Go
+bin/
+*.exe
+*.out
+
+# Logs
+*.log

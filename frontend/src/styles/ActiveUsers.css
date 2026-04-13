@@ -1,0 +1,42 @@
+.active-users-container {
+  padding: 10px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.active-users-container h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: var(--text-h);
+  text-align: center;
+}
+
+.active-users-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.active-users-container li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.user-role {
+  font-size: 12px;
+  color: var(--text);
+  font-style: italic;
+}

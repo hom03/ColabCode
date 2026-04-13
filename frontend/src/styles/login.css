@@ -1,0 +1,72 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: var(--bg);
+}
+
+.login-card {
+  width: 360px;
+  padding: 32px;
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-card h2 {
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--text-h);
+}
+
+.login-card input {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.role-selection {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.role-selection label {
+  display: flex;         
+  align-items: center;     
+  gap: 6px;                
+  font-size: 16px;
+  color: var(--text-h);
+  cursor: pointer;
+}
+.role-selection input[type="radio"] {
+  width: 18px;
+  height: 18px;
+}
+
+.login-card button {
+  margin-top: 16px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+  width: 100%;
+}
+
+.login-card button:hover {
+  background: var(--accent-border);
+}
