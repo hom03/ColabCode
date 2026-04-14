@@ -36,6 +36,20 @@ func newServer() *server {
 func (s *server) Sync(req *proto.Empty, stream proto.CRDTService_SyncServer) error {
 	s.mu.Lock()
 	s.clients[stream] = time.Now()
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			s.mu.Lock()
+			if _, ok := s.clients[stream]; !ok {
+				s.mu.Unlock()
+				return
+			}
+			s.clients[stream] = time.Now()
+			s.mu.Unlock()
+		}
+	}()
 	snapshot := s.set.Values()
 	s.mu.Unlock()
 
