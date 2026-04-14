@@ -2,9 +2,10 @@ import { Operation, Empty } from "../proto/crdt_pb";
 import { CRDTServiceClient } from "../proto/CrdtServiceClientPb";
 
 const BASE_URL = "https://colabcode.up.railway.app"
-const client = new CRDTServiceClient(BASE_URL,null,null);
 
 export function connectCRDT(onMessage) {
+  const client = new CRDTServiceClient(BASE_URL,null,null);
+
   const stream = client.sync(new Empty(), {});
 
   stream.on("data", (response) => {
@@ -22,7 +23,8 @@ export function connectCRDT(onMessage) {
   });
 
   stream.on("end", () => {
-    console.log("CRDT stream ended");
+    console.log("CRDT stream ended - reconnecting...");
+    setTimeout(() => connectCRDT(onMessage), 1000);
   });
 
   return {
