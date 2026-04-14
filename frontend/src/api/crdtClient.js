@@ -1,7 +1,8 @@
 import { Operation, Empty } from "../proto/crdt_pb";
 import { CRDTServiceClient } from "../proto/CrdtServiceClientPb";
 
-const client = new CRDTServiceClient("http://localhost:8080", null, null);
+const BASE_URL = "https://colabcode.up.railway.app"
+const client = new CRDTServiceClient(BASE_URL,null,null);
 
 export function connectCRDT(onMessage) {
   const stream = client.sync(new Empty(), {});

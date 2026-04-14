@@ -1,5 +1,5 @@
 export async function executeCode(language, code) {
-  const res = await fetch("http://localhost:8080/execute", {
+  const res = await fetch("https://colabcode.up.railway.app/execute", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
