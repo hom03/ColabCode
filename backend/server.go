@@ -8,13 +8,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 )
 
@@ -169,6 +170,7 @@ func executeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	godotenv.Load()
 	srv := newServer()
 	srv.startHeartbeatMonitor()
 
@@ -213,15 +215,11 @@ func main() {
 		mux.ServeHTTP(w, r)
 	})
 
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatal(err)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // local fallback
 	}
-	go func() {
-		log.Println("Native gRPC running on :50051")
-		log.Fatal(grpcServer.Serve(lis))
-	}()
 
-	log.Println("gRPC-Web + HTTP server running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	log.Println("gRPC-Web + HTTP server running on " + port)
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }

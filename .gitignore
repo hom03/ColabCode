@@ -2,6 +2,9 @@
 node_modules/
 frontend/node_modules/
 
+# env
+.env
+
 # Build
 dist/
 frontend/dist/
