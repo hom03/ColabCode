@@ -61,12 +61,6 @@ func ExecuteCode(language, code string, timeout time.Duration) ExecutionResult {
 	if runtime.GOOS == "linux" {
 		args = append(args,
 			"--network", "none",
-			"--read-only",
-			"--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
-			"--security-opt", "no-new-privileges",
-			"--security-opt", "seccomp=backend/sandbox/security/seccomp.json",
-			"--cap-drop", "ALL",
-			"--user", "1000:1000", // run as non-root user)
 		)
 	}
 	args = append(args, dockerImage)
