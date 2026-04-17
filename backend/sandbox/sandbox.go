@@ -40,7 +40,7 @@ func ExecuteCode(language, code string, timeout time.Duration) ExecutionResult {
 			fmt.Sprintf("echo '%s' > /tmp/Main.java && javac /tmp/Main.java && java -cp /tmp Main", code)}
 
 	case "c_cpp":
-		dockerImage = "sandbox/cpp:latest"
+		dockerImage = "sandbox/c_cpp:latest"
 		cmdArgs = []string{"sh", "-c",
 			fmt.Sprintf("echo '%s' > /tmp/main.cpp && g++ /tmp/main.cpp -o /tmp/main && /tmp/main", code)}
 
