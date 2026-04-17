@@ -64,7 +64,7 @@ func ExecuteCode(language, code string, timeout time.Duration) ExecutionResult {
 			"--read-only",
 			"--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
 			"--security-opt", "no-new-privileges",
-			"--security-opt", "seccomp=./sandbox/security/seccomp.json",
+			"--security-opt", "seccomp=backend/sandbox/security/seccomp.json",
 			"--cap-drop", "ALL",
 			"--user", "1000:1000", // run as non-root user)
 		)
