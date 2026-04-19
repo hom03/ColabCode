@@ -1,7 +1,7 @@
 import { Operation, Empty } from "../proto/crdt_pb";
 import { CRDTServiceClient } from "../proto/CrdtServiceClientPb";
 
-const BASE_URL = "http://104.248.173.168:8080"
+const BASE_URL = "https://api.colabcode-fyp.dev"
 
 export function connectCRDT(onMessage) {
   const client = new CRDTServiceClient(BASE_URL,null,null);
