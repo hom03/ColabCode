@@ -9,7 +9,7 @@ import TodoPanel from "../components/TODO";
 import ActiveUsers from "../components/ActiveUsers";
 import ChatPanel from "../components/ChatPanel";
 import { connectCRDT } from "../api/crdtClient";
-import "../styles/Editor.css";
+import "../styles/editor.css";
 
 export default function EditorPage() {
   const user = JSON.parse(sessionStorage.getItem("user"));
