@@ -1,6 +1,8 @@
 package crdt
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 )
 
@@ -82,4 +84,14 @@ func (s *ORSet) Values() []string {
 		}
 	}
 	return values
+}
+
+func (s *ORSet) ToJSON() ([]byte, error) {
+	return json.Marshal(s)
+}
+
+func FromJson(data []byte) (*ORSet, error) {
+	var s ORSet
+	err := json.Unmarshal(data, &s)
+	return &s, err
 }

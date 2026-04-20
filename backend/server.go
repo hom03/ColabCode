@@ -3,6 +3,7 @@ package main
 import (
 	"colabcode/backend/crdt"
 	"colabcode/backend/sandbox"
+	"colabcode/backend/storage"
 	"colabcode/proto"
 	"context"
 	"encoding/json"
@@ -24,13 +25,26 @@ type server struct {
 	set     *crdt.ORSet
 	clients map[proto.CRDTService_SyncServer]time.Time
 	mu      sync.Mutex
+	store   *storage.RedisStore
 }
 
 func newServer() *server {
-	return &server{
+	store := storage.NewRedisStore()
+
+	s := &server{
 		set:     crdt.NewORSet(),
+		store:   store,
 		clients: make(map[proto.CRDTService_SyncServer]time.Time),
 	}
+
+	data, err := store.Load("crdt_state")
+	if err == nil {
+		if loaded, err := crdt.FromJson(data); err == nil {
+			s.set = loaded
+			log.Println("CRDT State loaded from Redis")
+		}
+	}
+	return s
 }
 
 func (s *server) Sync(req *proto.Empty, stream proto.CRDTService_SyncServer) error {
@@ -103,6 +117,11 @@ func (s *server) SendOperation(ctx context.Context, op *proto.Operation) (*proto
 	}
 	if op.Type == "remove" {
 		s.set.Remove(op.Value)
+	}
+
+	//Save to redis after operation
+	if data, err := s.set.ToJSON(); err == nil {
+		s.store.Save("crdt_state", data)
 	}
 
 	clients := make([]proto.CRDTService_SyncServer, 0, len(s.clients))
