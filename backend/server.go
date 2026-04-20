@@ -121,7 +121,9 @@ func (s *server) SendOperation(ctx context.Context, op *proto.Operation) (*proto
 
 	//Save to redis after operation
 	if data, err := s.set.ToJSON(); err == nil {
-		s.store.Save("crdt_state", data)
+		if err := s.store.Save("crdt_state", data); err != nil {
+			log.Println("Redis save failed: ", err)
+		}
 	}
 
 	clients := make([]proto.CRDTService_SyncServer, 0, len(s.clients))
