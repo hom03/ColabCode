@@ -1,6 +1,7 @@
 package main
 
 import (
+	"colabcode/backend/auth"
 	"colabcode/backend/crdt"
 	"colabcode/backend/sandbox"
 	"colabcode/backend/storage"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 )
 
@@ -204,6 +206,123 @@ func executeHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
+func registerHandler(userStore *storage.UserStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid JSON", 400)
+			return
+		}
+
+		if req.Email == "" || req.Password == "" {
+			http.Error(w, "Missing fields", 400)
+			return
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			http.Error(w, "Server error", 500)
+			return
+		}
+
+		err = userStore.CreateUser(req.Email, string(hash), "user")
+		if err != nil {
+			http.Error(w, "User already exists", 400)
+			return
+		}
+
+		w.Write([]byte("registered"))
+	}
+}
+
+func loginHandler(userStore *storage.UserStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid JSON", 400)
+			return
+		}
+
+		user, err := userStore.GetUserByEmail(req.Email)
+		if err != nil || user == nil {
+			http.Error(w, "Invalid credentials", 401)
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+		if err != nil {
+			http.Error(w, "Invalid credentials", 401)
+			return
+		}
+
+		token, err := auth.GenerateToken(user.ID, user.Role)
+		if err != nil {
+			http.Error(w, "Token generation failed", 500)
+			return
+		}
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"token": token,
+		})
+	}
+}
+
+func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Missing token", 401)
+			return
+		}
+
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			http.Error(w, "Invalid token format", 401)
+			return
+		}
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+		claims, err := auth.ValidateToken(tokenStr)
+		if err != nil {
+			http.Error(w, "Invalid token", 401)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "user", claims)
+		next(w, r.WithContext(ctx))
+	}
+}
+
+func adminOnly(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		claims, ok := r.Context().Value("user").(*auth.Claims)
+		if !ok {
+			http.Error(w, "Unauthorized", 401)
+			return
+		}
+
+		if claims.Role != "admin" {
+			http.Error(w, "Forbidden", 403)
+			return
+		}
+
+		next(w, r)
+	}
+}
+
+func adminHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Admin access granted"))
+}
+
 func main() {
 	godotenv.Load()
 	srv := newServer()
@@ -211,6 +330,11 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterCRDTServiceServer(grpcServer, srv)
+
+	userStore, err := storage.NewUserStore()
+	if err != nil {
+		log.Fatal("Failed to connect to DB:", err)
+	}
 
 	// Wrap gRPC for browser (gRPC-Web)
 	wrapped := grpcweb.WrapServer(
@@ -221,16 +345,19 @@ func main() {
 	)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/execute", executeHandler)
+	mux.HandleFunc("/execute", authMiddleware(executeHandler))
+	mux.HandleFunc("/admin", authMiddleware(adminOnly(adminHandler)))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
+	mux.HandleFunc("/register", registerHandler(userStore))
+	mux.HandleFunc("/login", loginHandler(userStore))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// ---- CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, x-grpc-web, x-user-agent")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-grpc-web, x-user-agent")
 		w.Header().Set("Access-Control-Expose-Headers", "grpc-status, grpc-message")
 
 		if r.Method == "OPTIONS" {
