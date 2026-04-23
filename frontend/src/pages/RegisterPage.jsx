@@ -1,68 +1,53 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { setToken } from "../api/auth";
-import { BASE_URL } from "../api/api";
+import { apiFetch } from "../api/api";
 import "../styles/login.css";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+
+    // ✅ basic validation (important for demo)
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
     try {
-      const res = await fetch(`${BASE_URL}/login`, {
+      const res = await apiFetch("/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
         const text = await res.text();
-        if (text.toLowerCase().includes("invalid")) {
-          setError("Invalid email or password");
-        } else {
-          setError(text || "Login failed");
-        }
+        setError(text || "Registration failed");
         return;
       }
 
-      const data = await res.json();
-
-      if (!data.token) {
-        setError("Login failed");
-        return;
-      }
-
-      // save JWT
-      setToken(data.token);
-      // redirect
-      navigate("/editor");
+      navigate("/login");
 
     } catch {
       setError("Server error");
-    } finally {
-        setLoading(false);
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2>ColabCode Login</h2>
+        <h2>Create Account</h2>
 
         {error && <div className="login-error">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleRegister}>
           <input
             placeholder="Email"
             type="email"
@@ -79,16 +64,26 @@ export default function LoginPage() {
             required
           />
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
+          <input
+            placeholder="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+
+          <button type="submit">Create Account</button>
         </form>
 
-        <p
-          style={{ marginTop: "10px", cursor: "pointer", color: "#888" }}
-          onClick={() => navigate("/register")}
-        >
-          Don't have an account? Register
+        {/* ✅ UX improvement */}
+        <p style={{ marginTop: "10px" }}>
+          Already have an account?{" "}
+          <span
+            style={{ color: "#5f9cff", cursor: "pointer" }}
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </span>
         </p>
       </div>
     </div>

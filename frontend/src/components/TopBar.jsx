@@ -1,13 +1,20 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { logout as doLogout } from "../api/auth";
 
-export default function TopBar({ user }) {
+export default function TopBar({ user, onLogout }) {
   const navigate = useNavigate();
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    navigate("/");
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      doLogout();
+      navigate("/login");
+    }
   };
+
+  const displayName = user?.email || user?.username || "anonymous";
 
   return (
     <header style={styles.header}>
@@ -15,15 +22,18 @@ export default function TopBar({ user }) {
         <button onClick={() => navigate("/editor")} style={styles.button}>
           Editor
         </button>
+
         {user?.role === "admin" && (
           <button onClick={() => navigate("/admin")} style={styles.button}>
             Admin
           </button>
         )}
       </div>
+
       <div style={styles.userInfo}>
-        <span>{user?.username} ({user?.role})</span>
-        <button onClick={logout} style={styles.button}>
+        <span>{displayName} ({user?.role})</span>
+
+        <button onClick={handleLogout} style={styles.button}>
           Logout
         </button>
       </div>

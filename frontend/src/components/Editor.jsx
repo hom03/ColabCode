@@ -15,6 +15,7 @@ export default function CodeEditor({
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+
     editor.onDidChangeCursorPosition((e) => {
       if (!onCursorMove) return;
 
@@ -33,20 +34,16 @@ export default function CodeEditor({
     const decorations = Object.entries(remoteCursors || {}).map(
       ([username, data]) => ({
         range: new monaco.Range(
-          data.lineNumber,
-          data.column,
-          data.lineNumber,
-          data.column + 1
+          data.position.lineNumber,
+          data.position.column,
+          data.position.lineNumber,
+          data.position.column + 1
         ),
         options: {
           className: "remote-cursor",
-          style: {
-            borderLeft: `2px solid ${data.color}`
-          },
           after: {
-            content: username,
-            inlineClassName: "remote-cursor-label",
-            backgroundColor: data.color
+            content: ` ${username}`,
+            inlineClassName: "remote-cursor-label"
           }
         }
       })
@@ -64,7 +61,7 @@ export default function CodeEditor({
       width="100%"
       language={language}
       value={code}
-      onChange={(value) => setCode(value)}
+      onChange={(value) => setCode(value || "")}
       theme="vs-dark"
       options={{
         automaticLayout: true,

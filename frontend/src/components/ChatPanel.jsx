@@ -1,16 +1,18 @@
 import { useState } from "react";
+import { getUser } from "../api/auth";
 
 export default function ChatPanel({ messages, crdt }) {
-  const user = JSON.parse(sessionStorage.getItem("user"));
+  const user = getUser();
+  const username = user?.email || user?.username || "anonymous";
+
   const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(null);
 
   const handleTyping = (value) => {
     setInput(value);
 
     crdt?.add({
       kind: "chatTyping",
-      user: user.username,
+      user: username,
       time: Date.now()
     });
   };
@@ -20,7 +22,7 @@ export default function ChatPanel({ messages, crdt }) {
 
     crdt?.add({
       kind: "chat",
-      user: user.username,
+      user: username,
       text: input.trim(),
       time: Date.now()
     });
@@ -32,17 +34,11 @@ export default function ChatPanel({ messages, crdt }) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ flex: 1, overflowY: "auto", padding: "10px", borderBottom: "1px solid #ccc" }}>
         {messages.map((msg, idx) => (
-          <div key={idx}>
+          <div key={msg.time || idx}>
             <strong>{msg.user}:</strong> {msg.text}
           </div>
         ))}
       </div>
-
-      {typing && (
-        <div style={{ fontStyle: "italic", padding: "5px" }}>
-          {typing} is typing...
-        </div>
-      )}
 
       <div style={{ padding: "10px", borderTop: "1px solid #ccc" }}>
         <input
