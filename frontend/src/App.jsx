@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import EditorPage from "./pages/EditorPage";
 import AdminPage from "./pages/AdminPage";
+import RegisterPage from "./pages/RegisterPage";
 import { connectCRDT } from "./api/crdtClient";
 
 function App() {
