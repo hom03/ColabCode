@@ -234,7 +234,7 @@ func registerHandler(userStore *storage.UserStore) http.HandlerFunc {
 			http.Error(w, "User already exists", 400)
 			return
 		}
-
+		log.Println("REGISTER HIT:", req.Email)
 		w.Write([]byte("registered"))
 	}
 }
@@ -272,6 +272,7 @@ func loginHandler(userStore *storage.UserStore) http.HandlerFunc {
 		json.NewEncoder(w).Encode(map[string]string{
 			"token": token,
 		})
+		log.Println("LOGIN HIT:", req.Email)
 	}
 }
 

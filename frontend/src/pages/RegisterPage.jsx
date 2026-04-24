@@ -15,7 +15,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // ✅ basic validation (important for demo)
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -75,7 +74,6 @@ export default function RegisterPage() {
           <button type="submit">Create Account</button>
         </form>
 
-        {/* ✅ UX improvement */}
         <p style={{ marginTop: "10px" }}>
           Already have an account?{" "}
           <span
