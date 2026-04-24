@@ -231,7 +231,8 @@ func registerHandler(userStore *storage.UserStore) http.HandlerFunc {
 
 		err = userStore.CreateUser(req.Email, string(hash), "user")
 		if err != nil {
-			http.Error(w, "User already exists", 400)
+			log.Println("REGISTER ERROR:", err)
+			http.Error(w, err.Error(), 400)
 			return
 		}
 		log.Println("REGISTER HIT:", req.Email)
