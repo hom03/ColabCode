@@ -64,12 +64,24 @@ func (s *server) Sync(req *proto.Empty, stream proto.CRDTService_SyncServer) err
 
 	// Send current snapshot
 	for _, value := range snapshot {
+		select {
+		case <-stream.Context().Done():
+			log.Println("Client disconnected before snapshot complete")
+			return nil
+		default:
+		}
+
 		if err := stream.Send(&proto.Operation{
 			Type:  "add",
 			Value: value,
 		}); err != nil {
 			log.Println("Snapshot send failed:", err)
-			return err
+
+			s.mu.Lock()
+			delete(s.clients, stream)
+			s.mu.Unlock()
+
+			return nil
 		}
 	}
 
@@ -150,26 +162,6 @@ func (s *server) SendOperation(ctx context.Context, op *proto.Operation) (*proto
 	}
 
 	return &proto.Empty{}, nil
-}
-
-func (s *server) startHeartbeatMonitor() {
-	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			s.mu.Lock()
-
-			for client, lastSeen := range s.clients {
-				if time.Since(lastSeen) > 30*time.Second {
-					log.Println("Removing inactive client")
-					delete(s.clients, client)
-				}
-			}
-
-			s.mu.Unlock()
-		}
-	}()
 }
 
 func executeHandler(w http.ResponseWriter, r *http.Request) {
@@ -345,7 +337,6 @@ func main() {
 	godotenv.Load()
 
 	srv := newServer()
-	srv.startHeartbeatMonitor()
 
 	grpcServer := grpc.NewServer()
 	proto.RegisterCRDTServiceServer(grpcServer, srv)
