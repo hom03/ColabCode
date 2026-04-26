@@ -1,30 +1,34 @@
 import { Operation, Empty } from "../proto/crdt_pb";
 import { CRDTServiceClient } from "../proto/CrdtServiceClientPb";
 
-const BASE_URL = "https://api.colabcode-fyp.dev"
+const BASE_URL = "https://api.colabcode-fyp.dev";
 
 export function connectCRDT(onMessage) {
-  const client = new CRDTServiceClient(BASE_URL,null,null);
-
+  const client = new CRDTServiceClient(BASE_URL, null, null);
   const stream = client.sync(new Empty(), {});
+  let closed = false;
 
   stream.on("data", (response) => {
+    if (closed) return;
+
     const op = {
       type: response.getType(),
       value: response.getValue(),
     };
 
-    console.log("CRDT received:", op);
     onMessage(op);
   });
 
   stream.on("error", (err) => {
-    console.error("CRDT stream error:", err);
+    if (!closed) {
+      console.error("CRDT stream error:", err);
+    }
   });
 
   stream.on("end", () => {
-    console.log("CRDT stream ended - reconnecting...");
-    setTimeout(() => connectCRDT(onMessage), 1000);
+    if (!closed) {
+      console.log("CRDT stream ended");
+    }
   });
 
   return {
@@ -45,7 +49,8 @@ export function connectCRDT(onMessage) {
     },
 
     close() {
+      closed = true;
       stream.cancel();
-    }
+    },
   };
 }
