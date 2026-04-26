@@ -5,6 +5,10 @@
   border: 1px solid var(--border);
   height: 100%;
   box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .active-users-container h3 {
@@ -12,19 +16,24 @@
   font-size: 16px;
   color: var(--text-h);
   text-align: center;
+  flex-shrink: 0;
 }
 
 .active-users-container ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 100%;
+
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
 .active-users-container li {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
+
   padding: 6px 8px;
   border-bottom: 1px solid var(--border);
   font-size: 14px;
@@ -33,10 +42,14 @@
 .user-name {
   font-weight: 500;
   color: var(--text-h);
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .user-role {
   font-size: 12px;
   color: var(--text);
   font-style: italic;
+  white-space: nowrap;
 }

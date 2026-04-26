@@ -210,6 +210,7 @@ func registerHandler(userStore *storage.UserStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			Email    string `json:"email"`
+			Username string `json:"username"`
 			Password string `json:"password"`
 		}
 
@@ -218,7 +219,7 @@ func registerHandler(userStore *storage.UserStore) http.HandlerFunc {
 			return
 		}
 
-		if req.Email == "" || req.Password == "" {
+		if req.Email == "" || req.Username == "" || req.Password == "" {
 			http.Error(w, "Missing fields", 400)
 			return
 		}
@@ -229,7 +230,7 @@ func registerHandler(userStore *storage.UserStore) http.HandlerFunc {
 			return
 		}
 
-		err = userStore.CreateUser(req.Email, string(hash), "user")
+		err = userStore.CreateUser(req.Email, req.Username, string(hash), "user")
 		if err != nil {
 			log.Println("REGISTER ERROR:", err)
 			http.Error(w, err.Error(), 400)
@@ -264,7 +265,7 @@ func loginHandler(userStore *storage.UserStore) http.HandlerFunc {
 			return
 		}
 
-		token, err := auth.GenerateToken(user.ID, user.Role)
+		token, err := auth.GenerateToken(user.ID, user.Email, user.Username, user.Role)
 		if err != nil {
 			http.Error(w, "Token generation failed", 500)
 			return

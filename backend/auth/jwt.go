@@ -17,15 +17,19 @@ func getSecret() []byte {
 }
 
 type Claims struct {
-	UserID int
-	Role   string
+	UserID   int    `json:"userId"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID int, role string) (string, error) {
+func GenerateToken(userID int, email, username, role string) (string, error) {
 	claims := Claims{
-		UserID: userID,
-		Role:   role,
+		UserID:   userID,
+		Email:    email,
+		Username: username,
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
@@ -36,15 +40,20 @@ func GenerateToken(userID int, role string) (string, error) {
 }
 
 func ValidateToken(tokenStr string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method")
-		}
-		return getSecret(), nil
-	})
+	token, err := jwt.ParseWithClaims(
+		tokenStr,
+		&Claims{},
+		func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method")
+			}
+			return getSecret(), nil
+		},
+	)
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
 	}
+
 	return nil, err
 }

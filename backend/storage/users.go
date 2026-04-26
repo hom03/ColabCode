@@ -11,6 +11,7 @@ import (
 type User struct {
 	ID       int
 	Email    string
+	Username string
 	Password string
 	Role     string
 }
@@ -34,10 +35,10 @@ func NewUserStore() (*UserStore, error) {
 	return &UserStore{db: db}, nil
 }
 
-func (s *UserStore) CreateUser(email, password, role string) error {
+func (s *UserStore) CreateUser(email, username, password, role string) error {
 	_, err := s.db.Exec(
-		"INSERT INTO users (email, password, role) VALUES ($1, $2, $3)",
-		email, password, role,
+		"INSERT INTO users (email, username, password, role) VALUES ($1, $2, $3, $4)",
+		email, username, password, role,
 	)
 	if err != nil {
 		return fmt.Errorf("create user failed: %w", err)
@@ -47,12 +48,12 @@ func (s *UserStore) CreateUser(email, password, role string) error {
 
 func (s *UserStore) GetUserByEmail(email string) (*User, error) {
 	row := s.db.QueryRow(
-		"SELECT id, email, password, role FROM users WHERE email=$1",
+		"SELECT id, email, username, password, role FROM users WHERE email=$1",
 		email,
 	)
 
 	var u User
-	err := row.Scan(&u.ID, &u.Email, &u.Password, &u.Role)
+	err := row.Scan(&u.ID, &u.Email, &u.Username, &u.Password, &u.Role)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

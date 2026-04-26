@@ -7,6 +7,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,7 +24,7 @@ export default function RegisterPage() {
     try {
       const res = await apiFetch("/register", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, username, password }),
       });
 
       if (!res.ok) {
@@ -52,6 +53,13 @@ export default function RegisterPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
             required
           />
 

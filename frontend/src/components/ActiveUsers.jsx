@@ -14,15 +14,13 @@ export default function ActiveUsers() {
       const stored = JSON.parse(localStorage.getItem("activeUsers") || "[]");
       const now = Date.now();
 
-      // remove stale users (5s)
       const alive = stored.filter(u => now - u.lastSeen < 5000);
 
-      // add/update current user
       const updated = [
         ...alive.filter(u => u.id !== idRef.current),
         {
           id: idRef.current,
-          username: user.email || user.username || "unknown",
+          username: user.username || user.email || "unknown",
           role: (user.role || "User").replace(/^./, c => c.toUpperCase()),
           lastSeen: now
         }
@@ -39,17 +37,26 @@ export default function ActiveUsers() {
   }, [user]);
 
   return (
-    <div className="active-users">
-      <h4>Active Users</h4>
+    <div className="active-users-container">
+      <h3>Active Users</h3>
 
-      {users.length === 0 && <div>No active users</div>}
+      {users.length === 0 ? (
+        <div>No active users</div>
+      ) : (
+        <ul>
+          {users.map(u => (
+            <li key={u.id}>
+              <span className="user-name">
+                {u.username} {u.id === idRef.current && "(You)"}
+              </span>
 
-      {users.map(u => (
-        <div key={u.id}>
-          {u.username} ({u.role}){" "}
-          {u.id === idRef.current && "(You)"}
-        </div>
-      ))}
+              <span className="user-role">
+                {u.role}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

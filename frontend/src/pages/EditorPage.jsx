@@ -26,7 +26,7 @@ export default function EditorPage() {
   const [todos, setTodos] = useState([]);
   const [messages, setMessages] = useState([]);
 
-  const username = user?.email || user?.username || "anonymous";
+  const username = user?.username || user?.email || "anonymous";
 
   // Redirect if not logged in
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function EditorPage() {
     return () => connection?.close();
   }, [user]);
 
-  // ✏️ Code changes
+  // Code changes
   const handleCodeChange = (value) => {
     setCode(value);
     setLastEditor(username);

@@ -14,7 +14,11 @@ export default function TopBar({ user, onLogout }) {
     }
   };
 
-  const displayName = user?.email || user?.username || "anonymous";
+  const displayName = user?.username || user?.email || "anonymous";
+
+  const role = user?.role
+    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+    : "User";
 
   return (
     <header style={styles.header}>
@@ -31,7 +35,7 @@ export default function TopBar({ user, onLogout }) {
       </div>
 
       <div style={styles.userInfo}>
-        <span>{displayName} ({user?.role})</span>
+        <span>{displayName} ({role})</span>
 
         <button onClick={handleLogout} style={styles.button}>
           Logout
