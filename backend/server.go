@@ -43,42 +43,18 @@ func newServer() *server {
 	if err == nil {
 		if loaded, err := crdt.FromJson(data); err == nil {
 			s.set = loaded
-			log.Println("CRDT State loaded from Redis")
+			log.Println("CRDT state loaded from Redis")
 		}
 	}
+
 	return s
 }
 
 func (s *server) Sync(req *proto.Empty, stream proto.CRDTService_SyncServer) error {
 	s.mu.Lock()
 	s.clients[stream] = time.Now()
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			s.mu.Lock()
-			if _, ok := s.clients[stream]; !ok {
-				s.mu.Unlock()
-				return
-			}
-			s.clients[stream] = time.Now()
-			s.mu.Unlock()
-		}
-	}()
 	snapshot := s.set.Values()
 	s.mu.Unlock()
-
-	// Send snapshot
-	for _, value := range snapshot {
-		if err := stream.Send(&proto.Operation{
-			Type:  "add",
-			Value: value,
-		}); err != nil {
-			log.Println("Failed to send snapshot:", err)
-			return err
-		}
-	}
 
 	defer func() {
 		s.mu.Lock()
@@ -86,8 +62,21 @@ func (s *server) Sync(req *proto.Empty, stream proto.CRDTService_SyncServer) err
 		s.mu.Unlock()
 	}()
 
-	// keep connection open forever
-	select {}
+	// Send current snapshot
+	for _, value := range snapshot {
+		if err := stream.Send(&proto.Operation{
+			Type:  "add",
+			Value: value,
+		}); err != nil {
+			log.Println("Snapshot send failed:", err)
+			return err
+		}
+	}
+
+	// Wait until browser disconnects
+	<-stream.Context().Done()
+	log.Println("Client disconnected")
+	return nil
 }
 
 func (s *server) SendOperation(ctx context.Context, op *proto.Operation) (*proto.Empty, error) {
@@ -95,36 +84,50 @@ func (s *server) SendOperation(ctx context.Context, op *proto.Operation) (*proto
 
 	s.mu.Lock()
 
-	// EXECUTE
+	// ---------------- EXECUTE ----------------
 	if op.Type == "execute" {
+		clients := make([]proto.CRDTService_SyncServer, 0, len(s.clients))
+		for c := range s.clients {
+			clients = append(clients, c)
+		}
+		s.mu.Unlock()
+
 		parts := strings.SplitN(op.Value, "|", 2)
 		if len(parts) == 2 {
 			result := sandbox.ExecuteCode(parts[0], parts[1], 5*time.Second)
 
-			for client := range s.clients {
-				client.Send(&proto.Operation{
+			for _, client := range clients {
+				err := client.Send(&proto.Operation{
 					Type:  "output",
 					Value: fmt.Sprintf("%s|||%s", result.Stdout, result.Stderr),
 				})
+
+				if err != nil {
+					log.Println("Removing dead client:", err)
+
+					s.mu.Lock()
+					delete(s.clients, client)
+					s.mu.Unlock()
+				}
 			}
 		}
 
-		s.mu.Unlock()
 		return &proto.Empty{}, nil
 	}
 
-	// CRDT
+	// ---------------- CRDT ----------------
 	if op.Type == "add" {
 		s.set.Add(op.Value)
 	}
+
 	if op.Type == "remove" {
 		s.set.Remove(op.Value)
 	}
 
-	//Save to redis after operation
+	// Save latest state to Redis
 	if data, err := s.set.ToJSON(); err == nil {
 		if err := s.store.Save("crdt_state", data); err != nil {
-			log.Println("Redis save failed: ", err)
+			log.Println("Redis save failed:", err)
 		}
 	}
 
@@ -132,10 +135,18 @@ func (s *server) SendOperation(ctx context.Context, op *proto.Operation) (*proto
 	for c := range s.clients {
 		clients = append(clients, c)
 	}
+
 	s.mu.Unlock()
 
-	for _, c := range clients {
-		c.Send(op)
+	// Broadcast to all clients
+	for _, client := range clients {
+		if err := client.Send(op); err != nil {
+			log.Println("Removing dead client:", err)
+
+			s.mu.Lock()
+			delete(s.clients, client)
+			s.mu.Unlock()
+		}
 	}
 
 	return &proto.Empty{}, nil
@@ -148,12 +159,14 @@ func (s *server) startHeartbeatMonitor() {
 
 		for range ticker.C {
 			s.mu.Lock()
+
 			for client, lastSeen := range s.clients {
-				if time.Since(lastSeen) > 20*time.Second {
+				if time.Since(lastSeen) > 30*time.Second {
 					log.Println("Removing inactive client")
 					delete(s.clients, client)
 				}
 			}
+
 			s.mu.Unlock()
 		}
 	}()
@@ -162,7 +175,7 @@ func (s *server) startHeartbeatMonitor() {
 func executeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == http.MethodOptions {
@@ -200,9 +213,8 @@ func executeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unsupported language", http.StatusBadRequest)
 		return
 	}
-	log.Printf("HTTP execute request: %s (%d chars)", req.Language, len(req.Code))
-	result := sandbox.ExecuteCode(req.Language, req.Code, 5*time.Second)
 
+	result := sandbox.ExecuteCode(req.Language, req.Code, 5*time.Second)
 	json.NewEncoder(w).Encode(result)
 }
 
@@ -232,11 +244,10 @@ func registerHandler(userStore *storage.UserStore) http.HandlerFunc {
 
 		err = userStore.CreateUser(req.Email, req.Username, string(hash), "user")
 		if err != nil {
-			log.Println("REGISTER ERROR:", err)
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		log.Println("REGISTER HIT:", req.Email)
+
 		w.Write([]byte("registered"))
 	}
 }
@@ -259,13 +270,18 @@ func loginHandler(userStore *storage.UserStore) http.HandlerFunc {
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-		if err != nil {
+		if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) != nil {
 			http.Error(w, "Invalid credentials", 401)
 			return
 		}
 
-		token, err := auth.GenerateToken(user.ID, user.Email, user.Username, user.Role)
+		token, err := auth.GenerateToken(
+			user.ID,
+			user.Email,
+			user.Username,
+			user.Role,
+		)
+
 		if err != nil {
 			http.Error(w, "Token generation failed", 500)
 			return
@@ -274,24 +290,24 @@ func loginHandler(userStore *storage.UserStore) http.HandlerFunc {
 		json.NewEncoder(w).Encode(map[string]string{
 			"token": token,
 		})
-		log.Println("LOGIN HIT:", req.Email)
 	}
 }
 
 func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
 
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
+		if header == "" {
 			http.Error(w, "Missing token", 401)
 			return
 		}
 
-		if !strings.HasPrefix(authHeader, "Bearer ") {
+		if !strings.HasPrefix(header, "Bearer ") {
 			http.Error(w, "Invalid token format", 401)
 			return
 		}
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+		tokenStr := strings.TrimPrefix(header, "Bearer ")
 
 		claims, err := auth.ValidateToken(tokenStr)
 		if err != nil {
@@ -306,7 +322,6 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func adminOnly(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		claims, ok := r.Context().Value("user").(*auth.Claims)
 		if !ok {
 			http.Error(w, "Unauthorized", 401)
@@ -328,6 +343,7 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	godotenv.Load()
+
 	srv := newServer()
 	srv.startHeartbeatMonitor()
 
@@ -336,10 +352,9 @@ func main() {
 
 	userStore, err := storage.NewUserStore()
 	if err != nil {
-		log.Fatal("Failed to connect to DB:", err)
+		log.Fatal("DB connection failed:", err)
 	}
 
-	// Wrap gRPC for browser (gRPC-Web)
 	wrapped := grpcweb.WrapServer(
 		grpcServer,
 		grpcweb.WithOriginFunc(func(origin string) bool {
@@ -348,27 +363,31 @@ func main() {
 	)
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/register", registerHandler(userStore))
+	mux.HandleFunc("/login", loginHandler(userStore))
 	mux.HandleFunc("/execute", authMiddleware(executeHandler))
 	mux.HandleFunc("/admin", authMiddleware(adminOnly(adminHandler)))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
-	mux.HandleFunc("/register", registerHandler(userStore))
-	mux.HandleFunc("/login", loginHandler(userStore))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// ---- CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-grpc-web, x-user-agent")
-		w.Header().Set("Access-Control-Expose-Headers", "grpc-status, grpc-message")
+		w.Header().Set(
+			"Access-Control-Allow-Headers",
+			"Content-Type, Authorization, x-grpc-web, x-user-agent",
+		)
+		w.Header().Set(
+			"Access-Control-Expose-Headers",
+			"grpc-status, grpc-message",
+		)
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
-		// ---- gRPC-Web routing
 		if wrapped.IsGrpcWebRequest(r) ||
 			wrapped.IsGrpcWebSocketRequest(r) ||
 			wrapped.IsAcceptableGrpcCorsRequest(r) {
@@ -382,9 +401,9 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080" // local fallback
+		port = "8080"
 	}
 
-	log.Println("gRPC-Web + HTTP server running on " + port)
+	log.Println("Server running on :" + port)
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
