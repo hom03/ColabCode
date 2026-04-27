@@ -237,10 +237,9 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [user, displayName]);
 
-  if (!user || user.role !== "admin") {
+  if (!user) {
     return null;
   }
-
   // --- UI ---
   return (
     <div className="admin-container">
