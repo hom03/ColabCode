@@ -6,14 +6,20 @@ import "../styles/admin.css";
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const user = getUser();
+  const [user] = useState(() => getUser());
 
   // Redirect if not admin
   useEffect(() => {
-    if (!user || user.role !== "admin") {
+    if (!user) {
       navigate("/login");
+      return;
+    }
+    if (user.role !== "admin"){
+      navigate("/editor");
     }
   }, [user, navigate]);
+
+  const displayName = user.username || user.email;
 
   const [activeUsers, setActiveUsers] = useState([]);
 
@@ -65,10 +71,10 @@ export default function AdminPage() {
 
     const users = JSON.parse(localStorage.getItem("activeUsers") || "[]");
 
-    const filtered = users.filter(u => u.username !== user.email);
+    const filtered = users.filter(u => u.username !== displayName);
 
     filtered.push({
-      username: user.email,
+      username: displayName,
       role: user.role,
       lastSeen: Date.now()
     });
@@ -227,7 +233,11 @@ export default function AdminPage() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, displayName]);
+
+  if (!user || user.role !== "admin") {
+    return null;
+  }
 
   // --- UI ---
   return (
@@ -260,7 +270,7 @@ export default function AdminPage() {
           </div>
 
           <p>Last Change: {formatDate(lastChanged)}</p>
-          <p>Owner: {user?.email}</p>
+          <p>Owner: {displayName}</p>
           <p>Fingerprint: {fingerprint}</p>
           <p>Key Version: v{keyVersion}</p>
 
@@ -303,7 +313,7 @@ export default function AdminPage() {
                 <option>Admin</option>
               </select>
 
-              {u.username !== user.email && (
+              {u.username !== displayName && (
                 <button onClick={() => handleRemoveUser(u.username)}>
                   Remove
                 </button>

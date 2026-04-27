@@ -3,18 +3,12 @@ import { getUser } from "../api/auth";
 
 export default function ChatPanel({ messages, crdt }) {
   const user = getUser();
-  const username = user?.email || user?.username || "anonymous";
+  const username = user?.username || user?.email || "anonymous";
 
   const [input, setInput] = useState("");
 
   const handleTyping = (value) => {
     setInput(value);
-
-    crdt?.add({
-      kind: "chatTyping",
-      user: username,
-      time: Date.now()
-    });
   };
 
   const sendMessage = () => {
@@ -34,7 +28,7 @@ export default function ChatPanel({ messages, crdt }) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ flex: 1, overflowY: "auto", padding: "10px", borderBottom: "1px solid #ccc" }}>
         {messages.map((msg, idx) => (
-          <div key={msg.time || idx}>
+          <div key={(msg.time || idx) + "-" + msg.user}>
             <strong>{msg.user}:</strong> {msg.text}
           </div>
         ))}
@@ -47,10 +41,12 @@ export default function ChatPanel({ messages, crdt }) {
           onChange={(e) => handleTyping(e.target.value)}
           style={{ width: "80%" }}
           placeholder="Type a message..."
+          disabled={!crdt}
         />
         <button
           onClick={sendMessage}
           style={{ width: "15%", marginLeft: "2%" }}
+          disabled={!crdt}
         >
           →
         </button>

@@ -4,18 +4,21 @@ export default function TodoPanel({ todos, crdt }) {
   const [newTask, setNewTask] = useState("");
 
   const addTask = () => {
-    if (!newTask.trim()) return;
+    const task = newTask.trim();
+    if (!task || !crdt) return;
 
-    crdt?.add({
+    crdt.add({
       kind: "todo",
-      task: newTask.trim()
+      task
     });
 
     setNewTask("");
   };
 
   const removeTask = (task) => {
-    crdt?.add({
+    if (!crdt) return;
+
+    crdt.add({
       kind: "todoRemove",
       task
     });
@@ -24,12 +27,14 @@ export default function TodoPanel({ todos, crdt }) {
   return (
     <div style={{ padding: "10px" }}>
       <h4>TODO</h4>
+
       <ul style={{ paddingLeft: "20px" }}>
-        {todos.map((task, idx) => (
-          <li key={idx} style={{ marginBottom: "6px" }}>
+        {todos.map((task) => (
+          <li key={task} style={{ marginBottom: "6px" }}>
             {task}
             <button
               onClick={() => removeTask(task)}
+              disabled={!crdt}
               style={{ marginLeft: "6px", cursor: "pointer" }}
             >
               ✕
@@ -42,12 +47,18 @@ export default function TodoPanel({ todos, crdt }) {
         <input
           type="text"
           value={newTask}
-          placeholder="Add new task"
+          placeholder={crdt ? "Add new task" : "Connecting..."}
           onChange={(e) => setNewTask(e.target.value)}
+          disabled={!crdt}
           style={{ width: "70%", padding: "4px" }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") addTask();
+          }}
         />
+
         <button
           onClick={addTask}
+          disabled={!crdt}
           style={{ marginLeft: "6px", padding: "4px 8px" }}
         >
           Add

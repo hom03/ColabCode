@@ -75,12 +75,6 @@ func (s *server) Sync(req *proto.Empty, stream proto.CRDTService_SyncServer) err
 			Type:  "add",
 			Value: value,
 		}); err != nil {
-			log.Println("Snapshot send failed:", err)
-
-			s.mu.Lock()
-			delete(s.clients, stream)
-			s.mu.Unlock()
-
 			return nil
 		}
 	}

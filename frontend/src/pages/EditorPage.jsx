@@ -14,7 +14,7 @@ import "../styles/editor.css";
 
 export default function EditorPage() {
   const navigate = useNavigate();
-  const user = getUser();
+  const [user] = useState(() => getUser());
 
   const [crdt, setCrdt] = useState(null);
   const [code, setCode] = useState("");
@@ -28,30 +28,10 @@ export default function EditorPage() {
 
   const username = user?.username || user?.email || "anonymous";
 
-  // Redirect if not logged in
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    }
+    if (!user) navigate("/login");
   }, [user, navigate]);
 
-  // Logout handler
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  // Color generator
-  const getUserColor = (name) => {
-    const colors = ["#ff6b6b","#4ecdc4","#ffe66d","#5f9cff","#c792ea","#ff9f1c"];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-  };
-
-  // CRDT connection (only when authenticated)
   useEffect(() => {
     if (!user) return;
 
@@ -63,9 +43,7 @@ export default function EditorPage() {
 
         try {
           data = JSON.parse(op.value);
-          if (typeof data === "string") {
-            data = JSON.parse(data);
-          }
+          if (typeof data === "string") data = JSON.parse(data);
         } catch {
           return;
         }
@@ -104,7 +82,12 @@ export default function EditorPage() {
         }
 
         if (data.kind === "chat") {
-          setMessages(prev => [...prev, data]);
+          setMessages(prev => {
+            if (prev.some(m => m.time === data.time && m.user === data.user)) {
+              return prev;
+            }
+            return [...prev, data];
+          });
         }
       }
 
@@ -116,17 +99,30 @@ export default function EditorPage() {
 
     setCrdt(connection);
 
-    return () => connection?.close();
+    return () => connection.close();
   }, [user]);
 
-  // Code changes
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const getUserColor = (name) => {
+    const colors = ["#ff6b6b", "#4ecdc4", "#ffe66d", "#5f9cff", "#c792ea", "#ff9f1c"];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
   const handleCodeChange = (value) => {
-    setCode(value);
+    setCode(value || "");
     setLastEditor(username);
 
     crdt?.add({
       kind: "code",
-      code: value,
+      code: value || "",
       user: username,
       time: Date.now()
     });
@@ -137,7 +133,6 @@ export default function EditorPage() {
     });
   };
 
-  // Cursor broadcast
   const broadcastCursor = (position) => {
     crdt?.add({
       kind: "cursor",
@@ -148,7 +143,6 @@ export default function EditorPage() {
     });
   };
 
-  // Run code
   const runCode = () => {
     crdt?.execute(language, code);
   };
@@ -166,10 +160,7 @@ export default function EditorPage() {
         <div className="ide-center">
           <h1>ColabCode Editor</h1>
 
-          <LanguageSelector
-            language={language}
-            setLanguage={setLanguage}
-          />
+          <LanguageSelector language={language} setLanguage={setLanguage} />
 
           <div className="editor-status">
             Last edited by: {lastEditor || "-"}

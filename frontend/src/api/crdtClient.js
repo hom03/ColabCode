@@ -27,7 +27,8 @@ export function connectCRDT(onMessage) {
 
   stream.on("end", () => {
     if (!closed) {
-      console.log("CRDT stream ended");
+      console.log("CRDT stream ended - reconnecting...");
+      setTimeout(() => connectCRDT(onMessage), 1000);
     }
   });
 
@@ -35,9 +36,13 @@ export function connectCRDT(onMessage) {
     add(value) {
       const op = new Operation();
       op.setType("add");
-      op.setValue(JSON.stringify(value));
+      op.setValue(
+        typeof value === "string" ? value : JSON.stringify(value)
+      );
 
-      client.sendOperation(op, {}, () => {});
+      client.sendOperation(op, {}, (err) => {
+        if (err) console.error("sendOperation error:", err);
+      });
     },
 
     execute(lang, code) {
@@ -45,7 +50,9 @@ export function connectCRDT(onMessage) {
       op.setType("execute");
       op.setValue(`${lang}|${code}`);
 
-      client.sendOperation(op, {}, () => {});
+      client.sendOperation(op, {}, (err) => {
+        if (err) console.error("execute error:", err);
+      });
     },
 
     close() {
