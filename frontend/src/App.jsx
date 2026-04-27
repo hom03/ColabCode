@@ -7,7 +7,7 @@ import RegisterPage from "./pages/RegisterPage";
 
 function RouteLogger() {
   const location = useLocation();
-  console.log("Current Route:",location.pathname);
+  console.log("Current Route:",location.pathname, location.hash);
   return null;
 }
 
