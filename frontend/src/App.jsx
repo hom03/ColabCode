@@ -1,5 +1,5 @@
 import React from "react";
-import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import EditorPage from "./pages/EditorPage";
 import AdminPage from "./pages/AdminPage";
@@ -13,7 +13,7 @@ function RouteLogger() {
 
 function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <RouteLogger />
       <Routes>
         <Route path="/" element={<LoginPage />} />
@@ -22,7 +22,7 @@ function App() {
         <Route path="/editor" element={<EditorPage />} />
         <Route path="/admin" element={<AdminPage />} />
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 
