@@ -33,6 +33,11 @@ export default function EditorPage() {
   }, []);
 
   useEffect(() => {
+    console.log("EditorPage MOUNTED");
+    return () => console.log("EditorPage UNMOUNTED");
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
 
     const connection = connectCRDT((op) => {
@@ -99,7 +104,10 @@ export default function EditorPage() {
 
     setCrdt(connection);
 
-    return () => connection.close();
+    return () => {
+      console.log("CRDT CLOSING");
+      connection.close();
+    };
   }, []);
 
   const handleLogout = () => {
