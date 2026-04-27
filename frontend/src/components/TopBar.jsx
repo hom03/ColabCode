@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { logout as doLogout } from "../api/auth";
 
 export default function TopBar({ user, onLogout }) {
+  console.log("TopBar user prop:", user);
+  console.log("Is admin?", user?.role === "admin");
   const navigate = useNavigate();
 
   const handleLogout = () => {
