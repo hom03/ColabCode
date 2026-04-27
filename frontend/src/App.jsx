@@ -11,11 +11,18 @@ function RouteLogger() {
   return null;
 }
 
-export default function App() {
+function App() {
   return (
-    <div style={{ padding: 50, fontSize: 40, color: "red" }}>
-      DEPLOY TEST 123
-    </div>
+    <HashRouter>
+      <RouteLogger />
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/editor" element={<EditorPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+      </Routes>
+    </HashRouter>
   );
 }
 
