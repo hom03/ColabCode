@@ -28,7 +28,11 @@ export default function TopBar({ user, onLogout }) {
         </button>
 
         {user?.role === "admin" && (
-          <button onClick={() => navigate("/admin")} style={styles.button}>
+          <button onClick={() => {
+            console.log("ADMIN BUTTON CLICKED");
+             navigate("/admin")
+            }}
+            style={styles.button}>
             Admin
           </button>
         )}
