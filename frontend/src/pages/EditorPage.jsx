@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import CodeEditor from "../components/Editor";
 import TopBar from "../components/TopBar";
@@ -14,7 +14,7 @@ import "../styles/editor.css";
 
 export default function EditorPage() {
   const navigate = useNavigate();
-  const user = getUser();
+  const user = useMemo(() => getUser(), []);
 
   const [crdt, setCrdt] = useState(null);
   const [code, setCode] = useState("");

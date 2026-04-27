@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { getUser, logout } from "../api/auth";
@@ -6,7 +6,7 @@ import "../styles/admin.css";
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const user = getUser();
+  const user = useMemo(() => getUser(), []);
 
   console.log("ADMIN PAGE RENDERED");
 
