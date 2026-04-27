@@ -6,7 +6,7 @@ import "../styles/admin.css";
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const [user] = useState(() => getUser());
+  const user = getUser();
 
   console.log("ADMIN PAGE RENDERED");
 

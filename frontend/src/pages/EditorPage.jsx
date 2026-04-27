@@ -14,7 +14,7 @@ import "../styles/editor.css";
 
 export default function EditorPage() {
   const navigate = useNavigate();
-  const [user] = useState(() => getUser());
+  const user = getUser();
 
   const [crdt, setCrdt] = useState(null);
   const [code, setCode] = useState("");
