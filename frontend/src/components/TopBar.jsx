@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { logout as doLogout } from "../api/auth";
 
 export default function TopBar({ user, onLogout }) {
@@ -23,28 +23,21 @@ export default function TopBar({ user, onLogout }) {
   return (
     <header style={styles.header}>
       <div style={styles.navLinks}>
-        <button onClick={() => navigate("/editor")} style={styles.button}>
+        <Link to="/editor" style={styles.linkButton}>
           Editor
-        </button>
+        </Link>
 
         {user?.role === "admin" && (
-          <button onClick={() => {
-            console.log("ADMIN BUTTON CLICKED before: ", window.location.pathname);
-             navigate("/admin");
-             setTimeout(() => {
-              console.log("After nav:", window.location.pathname);
-             }, 100);
-            }}
-            style={styles.button}>
+          <Link to="/admin" style={styles.linkButton}>
             Admin
-          </button>
+          </Link>
         )}
       </div>
 
       <div style={styles.userInfo}>
         <span>{displayName} ({role})</span>
 
-        <button onClick={handleLogout} style={styles.button}>
+        <button type="button" onClick={handleLogout} style={styles.button}>
           Logout
         </button>
       </div>
@@ -77,5 +70,15 @@ const styles = {
     padding: "6px 12px",
     cursor: "pointer",
     borderRadius: "4px",
+  },
+  linkButton: {
+    backgroundColor: "#3A3A3A",
+    color: "white",
+    border: "none",
+    padding: "6px 12px",
+    cursor: "pointer",
+    borderRadius: "4px",
+    textDecoration: "none",
+    display: "inline-block",
   },
 };
