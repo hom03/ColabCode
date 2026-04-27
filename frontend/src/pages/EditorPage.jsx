@@ -30,7 +30,7 @@ export default function EditorPage() {
 
   useEffect(() => {
     if (!user) navigate("/login");
-  }, [user, navigate]);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -100,7 +100,7 @@ export default function EditorPage() {
     setCrdt(connection);
 
     return () => connection.close();
-  }, [user]);
+  }, []);
 
   const handleLogout = () => {
     logout();
