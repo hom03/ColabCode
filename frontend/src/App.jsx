@@ -13,7 +13,11 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/editor" element={<EditorPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin" element={
+          <div style={{padding: 40, color: "red", fontSize: 40}}>
+            ADMIN ROUTE TEST
+          </div>
+        } />
       </Routes>
     </BrowserRouter>
   );
