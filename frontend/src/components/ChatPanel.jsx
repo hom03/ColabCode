@@ -37,7 +37,7 @@ export default function ChatPanel({ messages, crdt }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ flex: 1, overflowY: "auto", padding: "10px", borderBottom: "1px solid #333" }}>
-        {messages.map((msg, idx) => (
+        {[...messages].sort((a, b) => a.time - b.time).map((msg, idx) => (
           <div key={(msg.time || idx) + "-" + msg.user} style={{ marginBottom: "8px" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
               <strong style={{ fontSize: "13px" }}>{msg.user}</strong>
