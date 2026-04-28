@@ -8,8 +8,6 @@ export default function AdminPage() {
   const navigate = useNavigate();
   const user = useMemo(() => getUser(), []);
 
-  console.log("ADMIN PAGE RENDERED");
-
   // Redirect if not admin
   useEffect(() => {
     if (!user) {

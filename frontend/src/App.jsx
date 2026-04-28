@@ -5,16 +5,9 @@ import EditorPage from "./pages/EditorPage";
 import AdminPage from "./pages/AdminPage";
 import RegisterPage from "./pages/RegisterPage";
 
-function RouteLogger() {
-  const location = useLocation();
-  console.log("Current Route:",location.pathname, location.hash);
-  return null;
-}
-
 function App() {
   return (
     <BrowserRouter>
-      <RouteLogger />
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />

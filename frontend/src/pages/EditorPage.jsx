@@ -33,11 +33,6 @@ export default function EditorPage() {
   }, []);
 
   useEffect(() => {
-    console.log("EditorPage MOUNTED");
-    return () => console.log("EditorPage UNMOUNTED");
-  }, []);
-
-  useEffect(() => {
     if (!user) return;
 
     const connection = connectCRDT((op) => {
