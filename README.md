@@ -441,17 +441,3 @@ go run backend/tools/client.go
 ```
 
 ---
-
-## Known Limitations / TODO
-
-- CRDT state is global — all users share one session. No concept of separate rooms or projects yet.
-- The ORSet grows indefinitely. Old operations are never pruned. A compaction strategy (keeping only the latest `code` operation) would reduce memory and replay time for new clients joining.
-- Code execution triggered via gRPC (`execute` operation) bypasses JWT auth. The REST `/execute` endpoint is protected but the gRPC path is not.
-- Active user presence is tracked via `localStorage` polling rather than the server, so presence is per browser tab rather than per authenticated session.
-- The Admin page E2EE key management (keys, fingerprints, rotation) is currently client-side only using `localStorage`. No keys are stored or enforced server-side.
-
----
-
-## License
-
-MIT
