@@ -121,11 +121,36 @@ func (s *server) SendOperation(ctx context.Context, op *proto.Operation) (*proto
 		return &proto.Empty{}, nil
 	}
 
-	// ---------------- CRDT ----------------
+	// ---------------- PRESENCE (join/leave) ----------------
 	if op.Type == "add" {
+		var payload struct {
+			Kind string `json:"kind"`
+		}
+		json.Unmarshal([]byte(op.Value), &payload)
+
+		if payload.Kind == "join" || payload.Kind == "leave" {
+			// Broadcast only — never stored in ORSet or persisted to Redis
+			clients := make([]proto.CRDTService_SyncServer, 0, len(s.clients))
+			for c := range s.clients {
+				clients = append(clients, c)
+			}
+			s.mu.Unlock()
+
+			for _, client := range clients {
+				if err := client.Send(op); err != nil {
+					log.Println("Removing dead client:", err)
+					s.mu.Lock()
+					delete(s.clients, client)
+					s.mu.Unlock()
+				}
+			}
+			return &proto.Empty{}, nil
+		}
+
 		s.set.Add(op.Value)
 	}
 
+	// ---------------- CRDT ----------------
 	if op.Type == "remove" {
 		s.set.Remove(op.Value)
 	}

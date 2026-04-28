@@ -162,3 +162,23 @@ th {
 .upload-button:hover{
   background: var(--accent-border);
 }
+
+.you-badge {
+  color: #888;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.remove-btn {
+  background: #8b2020;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.remove-btn:hover {
+  background: #a82828;
+}

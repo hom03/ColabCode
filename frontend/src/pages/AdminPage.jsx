@@ -2,26 +2,25 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { getUser, logout } from "../api/auth";
+import { useActiveUsers } from "../context/ActiveUsersContext";
 import "../styles/admin.css";
 
 export default function AdminPage() {
   const navigate = useNavigate();
   const user = useMemo(() => getUser(), []);
+  const { activeUsers, setActiveUsers } = useActiveUsers();
 
-  // Redirect if not admin
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
-    if (user.role !== "admin"){
+    if (user.role !== "admin") {
       navigate("/editor");
     }
   }, [user, navigate]);
 
-  const displayName = user.username || user.email;
-
-  const [activeUsers, setActiveUsers] = useState([]);
+  const displayName = user?.username || user?.email;
 
   const [e2eeEnabled, setE2eeEnabled] = useState(() => {
     const saved = localStorage.getItem("e2eeEnabled");
@@ -54,7 +53,6 @@ export default function AdminPage() {
     .join(":")
     .slice(0, 32);
 
-  // --- Helper ---
   const formatDate = (date) =>
     date.toLocaleString("en-GB", {
       day: "2-digit",
@@ -65,42 +63,11 @@ export default function AdminPage() {
       second: "2-digit",
     });
 
-  // --- Active Users ---
-  const registerActiveUser = () => {
-    if (!user) return;
-
-    const users = JSON.parse(localStorage.getItem("activeUsers") || "[]");
-
-    const filtered = users.filter(u => u.username !== displayName);
-
-    filtered.push({
-      username: displayName,
-      role: user.role,
-      lastSeen: Date.now()
-    });
-
-    localStorage.setItem("activeUsers", JSON.stringify(filtered));
-    setActiveUsers(filtered);
-  };
-
-  const removeStaleUsers = () => {
-    const now = Date.now();
-    const users = JSON.parse(localStorage.getItem("activeUsers") || "[]");
-
-    const filtered = users.filter(u => now - u.lastSeen < 60000);
-
-    localStorage.setItem("activeUsers", JSON.stringify(filtered));
-    setActiveUsers(filtered);
-  };
-
-  // --- E2EE ---
   const handleToggleE2EE = () => {
     const newValue = !e2eeEnabled;
     const now = new Date();
-
     setE2eeEnabled(newValue);
     setLastChanged(now);
-
     localStorage.setItem("e2eeEnabled", JSON.stringify(newValue));
     localStorage.setItem("e2eeLastChanged", now.toISOString());
   };
@@ -108,54 +75,27 @@ export default function AdminPage() {
   const handleRotateKeys = () => {
     const newVersion = keyVersion + 1;
     const now = new Date();
-
     setKeyVersion(newVersion);
     setLastChanged(now);
-
     localStorage.setItem("keyVersion", newVersion);
     localStorage.setItem("e2eeLastChanged", now.toISOString());
   };
 
-  // --- Collaborators ---
   const handleInvite = () => {
     if (!inviteUser) return alert("Enter a username/email first");
-
     const collaborators = JSON.parse(localStorage.getItem("collaborators") || "[]");
-
     const filtered = collaborators.filter(c => c.username !== inviteUser);
-
-    filtered.push({
-      username: inviteUser,
-      role: "User",
-      lastSeen: Date.now()
-    });
-
+    filtered.push({ username: inviteUser, role: "User", lastSeen: Date.now() });
     localStorage.setItem("collaborators", JSON.stringify(filtered));
-
     setInviteUser("");
     alert(`${inviteUser} invited successfully!`);
   };
 
-  const handleChangeRole = (username, newRole) => {
-    const collaborators = JSON.parse(localStorage.getItem("collaborators") || "[]")
-      .map(u => u.username === username ? { ...u, role: newRole } : u);
-
-    localStorage.setItem("collaborators", JSON.stringify(collaborators));
-
-    setActiveUsers(prev =>
-      prev.map(u => u.username === username ? { ...u, role: newRole } : u)
-    );
-  };
-
   const handleRemoveUser = (username) => {
-    if (!window.confirm(`Remove ${username}?`)) return;
-
-    const filtered = activeUsers.filter(u => u.username !== username);
-    localStorage.setItem("activeUsers", JSON.stringify(filtered));
-    setActiveUsers(filtered);
+    if (!window.confirm(`Remove ${username} from the session?`)) return;
+    setActiveUsers(prev => prev.filter(u => u.username !== username));
   };
 
-  // --- Keys ---
   const handleExportPublicKey = () => {
     const blob = new Blob([publicKey], { type: "text/plain" });
     const a = document.createElement("a");
@@ -165,16 +105,8 @@ export default function AdminPage() {
   };
 
   const handleDownloadPrivate = () => {
-    const data = {
-      privateKey,
-      version: keyVersion,
-      created: new Date().toISOString()
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json"
-    });
-
+    const data = { privateKey, version: keyVersion, created: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "private-key-backup.json";
@@ -188,57 +120,27 @@ export default function AdminPage() {
   const handleUploadBackup = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-
     reader.onload = () => {
       const data = JSON.parse(reader.result);
-
       setPrivateKey(data.privateKey);
       localStorage.setItem("privateKey", data.privateKey);
-
       alert("Private key restored");
     };
-
     reader.readAsText(file);
   };
 
   const handleRecoveryKit = () => {
-    const kit = {
-      publicKey,
-      privateKey,
-      version: keyVersion,
-      created: new Date().toISOString()
-    };
-
-    const blob = new Blob([JSON.stringify(kit, null, 2)], {
-      type: "application/json"
-    });
-
+    const kit = { publicKey, privateKey, version: keyVersion, created: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(kit, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "recovery-kit.json";
     a.click();
   };
 
-  // --- Effects ---
-  useEffect(() => {
-    if (!user) return;
+  if (!user) return null;
 
-    registerActiveUser();
-
-    const interval = setInterval(() => {
-      registerActiveUser();
-      removeStaleUsers();
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [user, displayName]);
-
-  if (!user) {
-    return null;
-  }
-  // --- UI ---
   return (
     <div className="admin-container">
       <TopBar
@@ -252,27 +154,53 @@ export default function AdminPage() {
       <div className="admin-main">
         <h1>Admin Dashboard</h1>
 
+        {/* Active Users */}
+        <section className="admin-section">
+          <h2>Active Users ({activeUsers.length})</h2>
+          {activeUsers.length === 0 ? (
+            <p>No users currently connected.</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeUsers.map(u => (
+                  <tr key={u.username}>
+                    <td>{u.username} {u.username === displayName && <span className="you-badge">(You)</span>}</td>
+                    <td>{u.role || "user"}</td>
+                    <td>
+                      {u.username !== displayName && (
+                        <button
+                          className="remove-btn"
+                          onClick={() => handleRemoveUser(u.username)}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+
         {/* E2EE */}
         <section className="admin-section">
           <h2>End-to-End Encryption</h2>
-
           <div className="e2ee-status-row">
-            <span>
-              E2EE Status: <strong>{e2eeEnabled ? "Enabled" : "Disabled"}</strong>
-            </span>
-
-            <input
-              type="checkbox"
-              checked={e2eeEnabled}
-              onChange={handleToggleE2EE}
-            />
+            <span>E2EE Status: <strong>{e2eeEnabled ? "Enabled" : "Disabled"}</strong></span>
+            <input type="checkbox" checked={e2eeEnabled} onChange={handleToggleE2EE} />
           </div>
-
           <p>Last Change: {formatDate(lastChanged)}</p>
           <p>Owner: {displayName}</p>
           <p>Fingerprint: {fingerprint}</p>
           <p>Key Version: v{keyVersion}</p>
-
           <button onClick={handleExportPublicKey}>Export Public Key</button>
           <button onClick={handleDownloadPrivate}>Download Private Key</button>
           <button onClick={handleFingerprint}>View Fingerprint</button>
@@ -287,44 +215,16 @@ export default function AdminPage() {
         {/* Invite */}
         <section className="admin-section">
           <h2>Invite Collaborator</h2>
-
           <textarea
             value={inviteUser}
             onChange={(e) => setInviteUser(e.target.value)}
           />
-
           <button onClick={handleInvite}>Invite</button>
-        </section>
-
-        {/* Users */}
-        <section className="admin-section">
-          <h2>Active Users</h2>
-
-          {activeUsers.map((u, i) => (
-            <div key={i}>
-              {u.username} ({u.role})
-
-              <select
-                value={u.role}
-                onChange={(e) => handleChangeRole(u.username, e.target.value)}
-              >
-                <option>User</option>
-                <option>Admin</option>
-              </select>
-
-              {u.username !== displayName && (
-                <button onClick={() => handleRemoveUser(u.username)}>
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
         </section>
 
         {/* Recovery */}
         <section className="admin-section">
           <h2>Key Recovery</h2>
-
           <input type="file" onChange={handleUploadBackup} />
           <button onClick={handleRecoveryKit}>Generate Recovery Kit</button>
         </section>

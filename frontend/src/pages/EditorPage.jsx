@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useActiveUsers } from "../context/ActiveUsersContext";
 import CodeEditor from "../components/Editor";
 import TopBar from "../components/TopBar";
 import RunButton from "../components/RunButton";
@@ -25,6 +26,7 @@ export default function EditorPage() {
   const [remoteCursors, setRemoteCursors] = useState({});
   const [todos, setTodos] = useState([]);
   const [messages, setMessages] = useState([]);
+  const { activeUsers, setActiveUsers } = useActiveUsers();
 
   const username = user?.username || user?.email || "anonymous";
 
@@ -89,6 +91,18 @@ export default function EditorPage() {
             return [...prev, data];
           });
         }
+
+        if (data.kind === "join") {
+          setActiveUsers(prev =>
+            prev.find(u => u.username === data.user)
+              ? prev
+              : [...prev, { username: data.user }]
+          );
+        }
+
+        if (data.kind === "leave") {
+          setActiveUsers(prev => prev.filter(u => u.username !== data.user));
+        }
       }
 
       if (op.type === "output") {
@@ -97,10 +111,12 @@ export default function EditorPage() {
       }
     });
 
+    connection.add({ kind: "join", user: username });
+
     setCrdt(connection);
 
     return () => {
-      console.log("CRDT CLOSING");
+      connection.add({ kind: "leave", user: username });
       connection.close();
     };
   }, []);
@@ -157,7 +173,7 @@ export default function EditorPage() {
       <div className="ide-main">
         <div className="ide-left">
           <TodoPanel todos={todos} crdt={crdt} />
-          <ActiveUsers />
+          <ActiveUsers users={activeUsers} currentUser={username} />
         </div>
 
         <div className="ide-center">
