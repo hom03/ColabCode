@@ -30,7 +30,15 @@ export default function TopBar({ user, onLogout }) {
         </Link>
 
         {user?.role === "admin" && (
-          <Link to="/admin" style={styles.linkButton}>
+          <Link 
+            to="/admin" 
+            style={styles.linkButton}
+            onClick={(e) => {
+              e.preventDefault();
+              console.log("Admin clicked, navigating...");
+              navigate("/admin");
+            }}
+          >
             Admin
           </Link>
         )}
