@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { getUser } from "../api/auth";
 import "../styles/ActiveUsers.css";
 
 export default function ActiveUsers() {
   const [users, setUsers] = useState([]);
-  const user = getUser();
+  const user = useMemo(() => getUser(), []);
   const idRef = useRef(crypto.randomUUID());
 
   useEffect(() => {
@@ -34,12 +34,11 @@ export default function ActiveUsers() {
     const interval = setInterval(updateUsers, 1000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, []); // ← empty deps, mount/unmount only
 
   return (
     <div className="active-users-container">
       <h3>Active Users</h3>
-
       {users.length === 0 ? (
         <div>No active users</div>
       ) : (
@@ -49,7 +48,6 @@ export default function ActiveUsers() {
               <span className="user-name">
                 {u.username} {u.id === idRef.current && "(You)"}
               </span>
-
               <span className="user-role">
                 {u.role}
               </span>
