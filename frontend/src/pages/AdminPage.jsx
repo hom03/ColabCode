@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { getUser, logout } from "../api/auth";
-import { useActiveUsers } from "../context/ActiveUsersContext.jsx";
+import { useActiveUsers } from "../context/ActiveUsersContext";
 import "../styles/admin.css";
 
 export default function AdminPage() {

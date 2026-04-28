@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { ActiveUsersProvider } from "./context/ActiveUsersContext.jsx";
+import { ActiveUsersProvider } from "./context/ActiveUsersContext";
 import LoginPage from "./pages/LoginPage";
 import EditorPage from "./pages/EditorPage";
 import AdminPage from "./pages/AdminPage";

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useActiveUsers } from "../context/ActiveUsersContext.jsx";
+import { useActiveUsers } from "../context/ActiveUsersContext";
 import CodeEditor from "../components/Editor";
 import TopBar from "../components/TopBar";
 import RunButton from "../components/RunButton";
