@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "../styles/todo.css";
 
 export default function TodoPanel({ todos, crdt }) {
   const [newTask, setNewTask] = useState("");
@@ -6,36 +7,27 @@ export default function TodoPanel({ todos, crdt }) {
   const addTask = () => {
     const task = newTask.trim();
     if (!task || !crdt) return;
-
-    crdt.add({
-      kind: "todo",
-      task
-    });
-
+    crdt.add({ kind: "todo", task });
     setNewTask("");
   };
 
   const removeTask = (task) => {
     if (!crdt) return;
-
-    crdt.add({
-      kind: "todoRemove",
-      task
-    });
+    crdt.add({ kind: "todoRemove", task });
   };
 
   return (
-    <div style={{ padding: "10px" }}>
+    <div className="todo-panel">
       <h4>TODO</h4>
 
-      <ul style={{ paddingLeft: "20px" }}>
+      <ul className="todo-list">
         {todos.map((task) => (
-          <li key={task} style={{ marginBottom: "6px" }}>
-            {task}
+          <li key={task} className="todo-item">
+            <span>{task}</span>
             <button
               onClick={() => removeTask(task)}
               disabled={!crdt}
-              style={{ marginLeft: "6px", cursor: "pointer" }}
+              className="todo-remove-btn"
             >
               ✕
             </button>
@@ -43,23 +35,20 @@ export default function TodoPanel({ todos, crdt }) {
         ))}
       </ul>
 
-      <div style={{ marginTop: "10px" }}>
+      <div className="todo-input-row">
         <input
           type="text"
           value={newTask}
           placeholder={crdt ? "Add new task" : "Connecting..."}
           onChange={(e) => setNewTask(e.target.value)}
           disabled={!crdt}
-          style={{ width: "70%", padding: "4px" }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") addTask();
-          }}
+          className="todo-input"
+          onKeyDown={(e) => { if (e.key === "Enter") addTask(); }}
         />
-
         <button
           onClick={addTask}
           disabled={!crdt}
-          style={{ marginLeft: "6px", padding: "4px 8px" }}
+          className="todo-add-btn"
         >
           Add
         </button>

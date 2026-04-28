@@ -1,7 +1,7 @@
 export default function OutputPanel({ output }) {
   return (
-    <pre style={{ background: "#111", color: "#0f0", padding: "10px" }}>
-      {output}
+    <pre className="output-panel">
+      {output || "Output will appear here..."}
     </pre>
   );
 }

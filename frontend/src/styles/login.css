@@ -10,63 +10,81 @@
   width: 360px;
   padding: 32px;
   border-radius: 8px;
-  background: var(--bg);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .login-card h2 {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   color: var(--text-h);
+  font-size: 22px;
 }
 
 .login-card input {
   padding: 10px;
-  font-size: 16px;
+  font-size: 15px;
   border-radius: 4px;
   border: 1px solid var(--border);
-  background: var(--code-bg);
+  background: var(--bg);
   color: var(--text-h);
   width: 100%;
   box-sizing: border-box;
+  transition: border-color 0.2s;
 }
 
-.role-selection {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 10px;
-}
-
-.role-selection label {
-  display: flex;         
-  align-items: center;     
-  gap: 6px;                
-  font-size: 16px;
-  color: var(--text-h);
-  cursor: pointer;
-}
-.role-selection input[type="radio"] {
-  width: 18px;
-  height: 18px;
+.login-card input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .login-card button {
-  margin-top: 16px;
+  margin-top: 8px;
   padding: 10px;
-  font-size: 16px;
+  font-size: 15px;
   border-radius: 4px;
   border: none;
   background: var(--accent);
   color: white;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.2s;
   width: 100%;
 }
 
 .login-card button:hover {
   background: var(--accent-border);
+}
+
+.login-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-error {
+  color: #f87171;
+  font-size: 14px;
+  text-align: center;
+  padding: 8px;
+  background: rgba(248, 113, 113, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.login-card p {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.login-card p span {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.login-card p span:hover {
+  text-decoration: underline;
 }

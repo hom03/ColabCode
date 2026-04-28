@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { getUser } from "../api/auth";
+import "../styles/chatpanel.css";
 
 export default function ChatPanel({ messages, crdt }) {
   const user = getUser();
@@ -35,34 +36,36 @@ export default function ChatPanel({ messages, crdt }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, overflowY: "auto", padding: "10px", borderBottom: "1px solid #333" }}>
+    <div className="chat-panel">
+      <div className="chat-panel-header">Chat</div>
+
+      <div className="chat-messages">
         {[...messages].sort((a, b) => a.time - b.time).map((msg, idx) => (
-          <div key={(msg.time || idx) + "-" + msg.user} style={{ marginBottom: "8px" }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <strong style={{ fontSize: "13px" }}>{msg.user}</strong>
-              <span style={{ color: "#666", fontSize: "11px" }}>{formatTime(msg.time)}</span>
+          <div key={(msg.time || idx) + "-" + msg.user} className="chat-message">
+            <div className="chat-message-meta">
+              <span className="chat-message-user">{msg.user}</span>
+              <span className="chat-message-time">{formatTime(msg.time)}</span>
             </div>
-            <div style={{ fontSize: "13px", marginTop: "2px" }}>{msg.text}</div>
+            <div className="chat-message-text">{msg.text}</div>
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      <div style={{ padding: "10px", borderTop: "1px solid #333", display: "flex", gap: "6px" }}>
+      <div className="chat-input-row">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
-          style={{ flex: 1, padding: "6px 8px", borderRadius: "4px", border: "1px solid #444", background: "#1e1e1e", color: "white" }}
-          placeholder="Type a message..."
+          className="chat-input"
+          placeholder={crdt ? "Type a message..." : "Connecting..."}
           disabled={!crdt}
         />
         <button
           onClick={sendMessage}
           disabled={!crdt}
-          style={{ padding: "6px 12px" }}
+          className="chat-send-btn"
         >
           →
         </button>

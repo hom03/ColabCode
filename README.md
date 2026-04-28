@@ -10,11 +10,12 @@ A real-time collaborative code editor with live execution, chat, shared todos, a
 
 - Real-time collaborative editing with live cursor presence
 - Code execution in isolated Docker sandboxes (Python, Node.js, Java, C/C++)
-- Real-time chat synced across all connected users
+- Real-time chat synced across all connected users with timestamps
 - Shared TODO board
 - Typing indicators
+- Live active user presence via CRDT join/leave events
 - JWT authentication with role-based access (user / admin)
-- Admin dashboard with E2EE key management and user controls
+- Admin dashboard with active user management, E2EE key controls, and collaborator invites
 - CRDT-based conflict-free sync over gRPC-Web streaming
 - CRDT state persisted to Redis across server restarts
 
@@ -26,7 +27,7 @@ A real-time collaborative code editor with live execution, chat, shared todos, a
 Browser (Vercel)
   └── React + Vite frontend
         ├── REST (HTTP)      → /login, /register, /execute
-        └── gRPC-Web stream  → CRDT sync (code, cursors, chat, todos, output)
+        └── gRPC-Web stream  → CRDT sync (code, cursors, chat, todos, output, presence)
 
 DigitalOcean Droplet
   └── Nginx (HTTPS reverse proxy)
@@ -111,17 +112,27 @@ colabcode/
 │   │   ├── components/
 │   │   │   ├── Editor.jsx          # Monaco editor with remote cursor decorations
 │   │   │   ├── TopBar.jsx          # Navigation and user info
-│   │   │   ├── ActiveUsers.jsx     # Live presence via localStorage polling
+│   │   │   ├── ActiveUsers.jsx     # Live presence via CRDT join/leave events
 │   │   │   ├── ChatPanel.jsx       # Real-time chat via CRDT
 │   │   │   ├── TodoPanel.jsx       # Shared todo list via CRDT
 │   │   │   ├── LanguageSelector.jsx
 │   │   │   ├── OutputPanel.jsx
 │   │   │   └── RunButton.jsx
+│   │   ├── context/
+│   │   │   └── ActiveUsersContext.jsx  # Shared presence state across pages
 │   │   ├── pages/
 │   │   │   ├── LoginPage.jsx
 │   │   │   ├── RegisterPage.jsx
 │   │   │   ├── EditorPage.jsx      # Main collaborative editor
 │   │   │   └── AdminPage.jsx       # Admin dashboard (admin role only)
+│   │   ├── styles/
+│   │   │   ├── editor.css
+│   │   │   ├── admin.css
+│   │   │   ├── login.css
+│   │   │   ├── ActiveUsers.css
+│   │   │   ├── chatpanel.css
+│   │   │   ├── todo.css
+│   │   │   └── topbar.css
 │   │   └── proto/                  # Generated JS/TS gRPC-Web bindings
 │   │       ├── crdt_pb.js
 │   │       ├── crdt_pb.d.ts
@@ -168,12 +179,16 @@ Each operation carries a `kind` field inside its JSON value:
 |---|---|
 | `code` | Full code state + last editor username |
 | `cursor` | Cursor position and colour for a user |
-| `typing` | Typing indicator (ephemeral) |
+| `typing` | Typing indicator (ephemeral, not persisted) |
 | `chat` | Chat message |
 | `todo` | Add a todo item |
 | `todoRemove` | Remove a todo item |
 | `execute` | Trigger sandboxed code execution |
 | `output` | Code execution result broadcast to all clients |
+| `join` | User connected (broadcast only, never stored in ORSet) |
+| `leave` | User disconnected (broadcast only, never stored in ORSet) |
+
+`join` and `leave` events are broadcast-only — they are never added to the ORSet or persisted to Redis, so replaying the snapshot to a new client will never show stale presence data.
 
 ---
 

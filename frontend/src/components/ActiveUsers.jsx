@@ -1,4 +1,4 @@
-import "../styles/ActiveUsers.css";
+import "../styles/activeusers.css";
 
 export default function ActiveUsers({ users = [], currentUser }) {
   return (

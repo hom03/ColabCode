@@ -185,11 +185,9 @@ export default function EditorPage() {
             Last edited by: {lastEditor || "-"}
           </div>
 
-          {typingUser && (
-            <div style={{ color: getUserColor(typingUser) }}>
-              {typingUser} is typing...
-            </div>
-          )}
+          <div className="typing-indicator" style={{ color: typingUser ? getUserColor(typingUser) : "transparent" }}>
+            {typingUser ? `${typingUser} is typing...` : ""}
+          </div>
 
           <CodeEditor
             code={code}
