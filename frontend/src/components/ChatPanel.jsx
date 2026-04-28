@@ -11,11 +11,17 @@ export default function ChatPanel({ messages, crdt }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const formatTime = (ts) =>
-    new Date(ts).toLocaleTimeString("en-GB", {
+  const formatTime = (ts) => {
+    if (!ts) return "";
+    const d = new Date(ts);
+    return d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+    }) + " " + d.toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
 
   const sendMessage = () => {
     if (!input.trim()) return;
